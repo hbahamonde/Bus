@@ -1,1 +1,1 @@
-# Bus
+This paper looks at digitalized daily data on mobility in Santiago during 2020. 
