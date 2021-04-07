@@ -106,58 +106,70 @@ d87 = read.csv("https://github.com/hbahamonde/Datos-COVID19/raw/master/output/pr
 d88 = read.csv("https://github.com/hbahamonde/Datos-COVID19/raw/master/output/producto2/2021-01-22-CasosConfirmados.csv");d88$date <- as.Date('2021/01/22', format='%Y/%m/%d')
 
 # rbind daily contagions df
-contagions.d = rbind(d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31, d32, d33, d34, d35, d36, d37, d38, d39, d40, d41, d42, d43, d44, d45, d46, d47, d48, d49, d50, d51, d52, d53, d54, d55, d56, d57, d58, d59, d60, d61, d62, d63, d64, d65, d66, d67, d68, d69, d70, d71, d72, d73, d74, d75, d76, d77, d78, d79, d80, d81, d82, d83, d84, d85, d86, d87, d88)
+d = rbind(d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31, d32, d33, d34, d35, d36, d37, d38, d39, d40, d41, d42, d43, d44, d45, d46, d47, d48, d49, d50, d51, d52, d53, d54, d55, d56, d57, d58, d59, d60, d61, d62, d63, d64, d65, d66, d67, d68, d69, d70, d71, d72, d73, d74, d75, d76, d77, d78, d79, d80, d81, d82, d83, d84, d85, d86, d87, d88)
+
+setwd("~/research/Bus")
+save(d, file = "d.Rdata")
 
 
-## ORDERED PROCESS: 1, 2, 3, 4.
+#####
+cat("\014")
+rm(list=ls())
+graphics.off()
 
-# 1. create empty dataframe with complete days
-d.date = data.frame(date = c(seq(as.Date('2020/03/30', format='%Y/%m/%d'), as.Date('2021/01/22', format='%Y/%m/%d'), by=1) ))
+# loads pacman
+if (!require("pacman")) install.packages("pacman"); library(pacman) 
 
-# 2. 
-comunas.d = data.frame(Comuna = rep(unique(contagions.d$Comuna), nrow(d.date)))
-d.date = data.frame(date = rep(unique(d.date$date), length(unique(contagions.d$Comuna))))
-
-
-
-# 3.
-contaings.date.d = data.frame(cbind(d.date,comunas.d))
-
-# 4. merge daily contagions df with empty dataframe with complete days
-d = merge(contagions.d, contaings.date.d, by=c("date", "Comuna"), all = TRUE)
+load("d.Rdata")
 
 p_load(dplyr)
-d = dplyr::select(d, c("date", "Comuna", "Casos.Confirmados", "Codigo.comuna"))
-
-# p_load(Amelia)
-# d$Comuna = as.factor(d$Comuna)
-# a.out <- amelia(d, ts = "date", cs = "Comuna", splinetime = 1, intercs = F, bounds = matrix(c(3, 0, 100), nrow = 1, ncol = 3))
-
-#d$Casos.Confirmados.i = round(rowMeans(
-#  data.frame(a.out$imputations$imp1$Casos.Confirmados,
-#                    a.out$imputations$imp2$Casos.Confirmados,
-#                    a.out$imputations$imp3$Casos.Confirmados,
-#                    a.out$imputations$imp4$Casos.Confirmados,
-#                    a.out$imputations$imp5$Casos.Confirmados), na.rm = TRUE), 0)
-
-
-# Multiple imputation for covid vector
-p_load(imputeTS)
-d$Casos.Confirmados.i = round(na_interpolation(d$Casos.Confirmados, option = "linear"),0)
-
-
+d = dplyr::select(d, c("date", "Comuna", "Casos.Confirmados", "Codigo.comuna", "Region"))
 
 # Keep RM only
 p_load(dplyr)
-Comunas.RM = c(unique(contagions.d$Comuna[contagions.d$Region=="Metropolitana"]))
+Comunas.RM = c(unique(d$Comuna[d$Region=="Metropolitana"]))
 
-d = filter(d, Comuna == Comunas.RM[1] | Comuna == Comunas.RM[2] | Comuna == Comunas.RM[3] | Comuna == Comunas.RM[4] | Comuna == Comunas.RM[5] | Comuna == Comunas.RM[6] | Comuna == Comunas.RM[7] | Comuna == Comunas.RM[8] | Comuna == Comunas.RM[9] | Comuna == Comunas.RM[10] | Comuna == Comunas.RM[11] | Comuna == Comunas.RM[12] | Comuna == Comunas.RM[13] | Comuna == Comunas.RM[14] | Comuna == Comunas.RM[15] | Comuna == Comunas.RM[16] | Comuna == Comunas.RM[17] | Comuna == Comunas.RM[18] | Comuna == Comunas.RM[19] | Comuna == Comunas.RM[20] | Comuna == Comunas.RM[21] | Comuna == Comunas.RM[22] | Comuna == Comunas.RM[23] | Comuna == Comunas.RM[24] | Comuna == Comunas.RM[25] | Comuna == Comunas.RM[26] | Comuna == Comunas.RM[27] | Comuna == Comunas.RM[28] | Comuna == Comunas.RM[29] | Comuna == Comunas.RM[30] | Comuna == Comunas.RM[31] | Comuna == Comunas.RM[32] | Comuna == Comunas.RM[33] | Comuna == Comunas.RM[34] | Comuna == Comunas.RM[35] | Comuna == Comunas.RM[36] | Comuna == Comunas.RM[37] | Comuna == Comunas.RM[38] | Comuna == Comunas.RM[39] | Comuna == Comunas.RM[40] | Comuna == Comunas.RM[41] | Comuna == Comunas.RM[42] | Comuna == Comunas.RM[43] | Comuna == Comunas.RM[44] | Comuna == Comunas.RM[45] | Comuna == Comunas.RM[46] | Comuna == Comunas.RM[47] | Comuna == Comunas.RM[48] | Comuna == Comunas.RM[49] | Comuna == Comunas.RM[50] | Comuna == Comunas.RM[51] | Comuna == Comunas.RM[52] | Comuna == Comunas.RM[53])
-
+d = filter(d, Comuna == Comunas.RM[1] | Comuna == Comunas.RM[2] | Comuna == Comunas.RM[3] | Comuna == Comunas.RM[4] | Comuna == Comunas.RM[5] | Comuna == Comunas.RM[6] | Comuna == Comunas.RM[7] | Comuna == Comunas.RM[8] | Comuna == Comunas.RM[9] | Comuna == Comunas.RM[10] | Comuna == Comunas.RM[11] | Comuna == Comunas.RM[12] | Comuna == Comunas.RM[13] | Comuna == Comunas.RM[14] | Comuna == Comunas.RM[15] | Comuna == Comunas.RM[16] | Comuna == Comunas.RM[17] | Comuna == Comunas.RM[18] | Comuna == Comunas.RM[19] | Comuna == Comunas.RM[20] | Comuna == Comunas.RM[21] | Comuna == Comunas.RM[22] | Comuna == Comunas.RM[23] | Comuna == Comunas.RM[24] | Comuna == Comunas.RM[25] | Comuna == Comunas.RM[26] | Comuna == Comunas.RM[27] | Comuna == Comunas.RM[28] | Comuna == Comunas.RM[29] | Comuna == Comunas.RM[30] | Comuna == Comunas.RM[31] | Comuna == Comunas.RM[32] | Comuna == Comunas.RM[33] | Comuna == Comunas.RM[34] | Comuna == Comunas.RM[35] | Comuna == Comunas.RM[36] | Comuna == Comunas.RM[37] | Comuna == Comunas.RM[38] | Comuna == Comunas.RM[39] | Comuna == Comunas.RM[40] | Comuna == Comunas.RM[41] | Comuna == Comunas.RM[42] | Comuna == Comunas.RM[43] | Comuna == Comunas.RM[44] | Comuna == Comunas.RM[45] | Comuna == Comunas.RM[46] | Comuna == Comunas.RM[47] | Comuna == Comunas.RM[48] | Comuna == Comunas.RM[49] | Comuna == Comunas.RM[50] | Comuna == Comunas.RM[51] | Comuna == Comunas.RM[52])
 
 
 # Merge Fase DF
 p_load(foreign,dplyr)
+
 paso.a.paso.d = read.csv("https://github.com/hbahamonde/Datos-COVID19/raw/master/output/producto74/paso_a_paso_std.csv")
-paso.a.paso.d = dplyr::select(paso.a.paso.d, c("date", "Comuna", "Casos.Confirmados"))
+
+paso.a.paso.d = dplyr::select(paso.a.paso.d, c("codigo_comuna", "Fecha", "Paso"))
+
+colnames(paso.a.paso.d) <- c("Codigo.comuna", "date", "Paso")
+
+d = merge(d, paso.a.paso.d, by=c("Codigo.comuna", "date"))
+colnames(d) <- c("Codigo.comuna", "date", "Comuna", "COVID", "Region", "Paso")
+
+rownames(d) <- NULL # resets row names
+
+d <- unique(d, by = c("Comuna", "date")) # somehow there were repeated data
+
+# OLS (fixed effects)
+options(scipen=9999999)
+summary(lm(Paso ~ COVID + factor(Comuna) - 1, data=d))
+
+# Panel Regression
+## https://www.princeton.edu/~otorres/Panel101R.pdf
+p_load(plm)
+d$date.2 = 1:nrow(d)
+summary(plm(Paso ~ COVID, data = d, index = c("Comuna","date.2"), model="within"))
+summary(plm(Paso ~ COVID, data = d, index = c("Comuna","date.2"), model="random"))
 
 
+
+
+
+
+
+# Hazard Models
+
+p_load(survival)
+cox = coxph(Surv(L.cox$year, L.cox$year2, L.cox$incometax.s, origin=1901) ~ 
+                log(constmanufact.L) + 
+                log(constagricult.L) + 
+                log(totpop) +
+                cluster(country), data=L.cox)
