@@ -120,10 +120,11 @@ graphics.off()
 # loads pacman
 if (!require("pacman")) install.packages("pacman"); library(pacman) 
 
+setwd("~/research/Bus")
 load("d.Rdata")
 
 p_load(dplyr)
-d = dplyr::select(d, c("date", "Comuna", "Casos.Confirmados", "Codigo.comuna", "Region"))
+d = dplyr::select(d, c("date", "Comuna", "Casos.Confirmados", "Codigo.comuna", "Region", "Poblacion"))
 
 # Keep RM only
 p_load(dplyr)
@@ -142,27 +143,54 @@ paso.a.paso.d = dplyr::select(paso.a.paso.d, c("codigo_comuna", "Fecha", "Paso")
 colnames(paso.a.paso.d) <- c("Codigo.comuna", "date", "Paso")
 
 d = merge(d, paso.a.paso.d, by=c("Codigo.comuna", "date"))
-colnames(d) <- c("Codigo.comuna", "date", "Comuna", "COVID", "Region", "Paso")
+colnames(d) <- c("Codigo.comuna", "date", "Comuna", "COVID", "Region", "Poblacion", "Paso")
 
 rownames(d) <- NULL # resets row names
 
 d <- unique(d, by = c("Comuna", "date")) # somehow there were repeated data
 
+# add % pop
+d$COVID.p = round((d$COVID*100)/d$Poblacion,2)
+
+# add poverty
+p_load(foreign,dplyr)
+casen = read.csv("https://github.com/hbahamonde/Bus/raw/main/casen2019.csv", header = TRUE,sep = ";")
+casen = casen %>% dplyr::select(Codigo.comuna, poverty)
+casen$poverty = as.numeric(as.character(casen$poverty)) 
+d = merge(d, casen, by=c("Codigo.comuna"), all=F)
+
+
+############
+# Models
+############
+
+
 # OLS (fixed effects)
 options(scipen=9999999)
-summary(lm(Paso ~ COVID + factor(Comuna) - 1, data=d))
+ols = lm(COVID.p ~ Paso + poverty, data=d)
+
 
 # Panel Regression
 ## https://www.princeton.edu/~otorres/Panel101R.pdf
 p_load(plm)
 d$date.2 = 1:nrow(d)
-summary(plm(Paso ~ COVID, data = d, index = c("Comuna","date.2"), model="within"))
-summary(plm(Paso ~ COVID, data = d, index = c("Comuna","date.2"), model="random"))
+p.fe = plm(COVID.p ~ Paso + poverty, data = d, index = c("Comuna","date.2"), model="within")
+p.re = plm(COVID.p ~ Paso + poverty, data = d, index = c("Comuna","date.2"), model="random")
+
+# Ordered Probit
+#p_load(MASS)
+# o.probit = polr(COVID ~ as.factor(Paso) + poverty, data = d, Hess=TRUE)
 
 
+# Table
+p_load(texreg)
+screenreg(list(ols,p.fe,p.re), omit.coef = "factor",custom.note="Since poverty is fixed by municipality it acts as a fixed effect. Due to multicoliniearity, the FE model drops the poverty variable.")
+
+# Prediction (OLS)
+## https://www.dataquest.io/blog/statistical-learning-for-predictive-modeling-r/
 
 
-
+predict(ols, data.frame(Paso = 2, poverty = min(d$poverty): max(d$poverty)), interval = "confidence")
 
 
 # Hazard Models
