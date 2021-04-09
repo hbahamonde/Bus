@@ -186,11 +186,97 @@ p.re = plm(COVID.p ~ Paso + poverty, data = d, index = c("Comuna","date.2"), mod
 p_load(texreg)
 screenreg(list(ols,p.fe,p.re), omit.coef = "factor",custom.note="Since poverty is fixed by municipality it acts as a fixed effect. Due to multicoliniearity, the FE model drops the poverty variable.")
 
+# Coefplot
+coefplot::coefplot(ols,strict=TRUE,coefficients=c("poverty", "Paso"),newNames=c(poverty="Porcentaje de Pobreza\n(Casen 2019)", Paso="Paso a Paso\n(Fase)"))
+
 # Prediction (OLS)
 ## https://www.dataquest.io/blog/statistical-learning-for-predictive-modeling-r/
 
 
-predict(ols, data.frame(Paso = 2, poverty = min(d$poverty): max(d$poverty)), interval = "confidence")
+
+
+# Plot 1
+Girth <- seq(9,21, by=0.5) ## make a girth vector
+Height <- seq(60,90, by=0.5) ## make a height vector
+pred_grid <- expand.grid(Girth = Girth, Height = Height)
+pred_grid$Volume2 <-predict(fit_2, new = pred_grid)
+
+
+ols.predict.d = data.frame(
+  
+  rbind(
+    predict(ols, data.frame(Paso = 1, poverty = min(d$poverty)), interval = "confidence"),
+    predict(ols, data.frame(Paso = 1, poverty = max(d$poverty)), interval = "confidence"),
+    
+    predict(ols, data.frame(Paso = 2, poverty = min(d$poverty)), interval = "confidence"),
+    predict(ols, data.frame(Paso = 2, poverty = max(d$poverty)), interval = "confidence"),
+    
+    predict(ols, data.frame(Paso = 3, poverty = min(d$poverty)), interval = "confidence"),
+    predict(ols, data.frame(Paso = 3, poverty = max(d$poverty)), interval = "confidence"),
+    
+    predict(ols, data.frame(Paso = 4, poverty = min(d$poverty)), interval = "confidence"),
+    predict(ols, data.frame(Paso = 4, poverty = max(d$poverty)), interval = "confidence")),
+  Fase = c(rep("1",2),rep("2",2),rep("3",2),rep("4",2)),
+  Pobreza = c(rep(c("Baja","Alta"),4))
+  
+)
+
+
+
+ggplot(ols.predict.d, aes( x=Fase, y = fit, ymin = lwr, ymax = upr)) +
+  geom_linerange(aes(color = Pobreza), size = 1, alpha = 0.5) +
+  geom_point(aes(color = Pobreza, shape = Pobreza)) +
+  theme_bw()
+
+
+
+ggplot(ols.predict.d, aes(x=Fase, y=fit, fill=Pobreza)) + 
+  geom_boxplot()
+
+
+data.frame(
+  rbind(p1,p2,p3),
+  Paso = c(rep("1", lenght),rep("2", lenght),rep("3", lenght)),
+  Pobreza = c(rep("Baja", 50), rep("Alta", 50)),
+  Pobreza.n = c(seq(min(d$poverty[d$poverty<mean(d$poverty)]), max(d$poverty), length.out = 50), seq(min(d$poverty[d$poverty>mean(d$poverty)]), max(d$poverty), length.out = 50))
+)
+
+
+
+
+
+# Plot 2
+paso.1.pob.min = data.frame(predict(ols, data.frame(Paso = 1, poverty = seq(min(d$poverty[d$poverty<mean(d$poverty)]), max(d$poverty), length.out = 50)), interval = "confidence"))
+
+paso.1.pob.max = data.frame(predict(ols, data.frame(Paso = 1, poverty =seq(min(d$poverty[d$poverty>mean(d$poverty)]), max(d$poverty), length.out = 50)), interval = "confidence"))
+
+#paso.2.pob.min = predict(ols, data.frame(Paso = 2, poverty = min(d$poverty)), interval = "confidence")
+#paso.2.pob.max = predict(ols, data.frame(Paso = 2, poverty = max(d$poverty)), interval = "confidence")
+
+#paso.3.pob.min = predict(ols, data.frame(Paso = 3, poverty = min(d$poverty)), interval = "confidence")
+#paso.3.pob.max = predict(ols, data.frame(Paso = 3, poverty = max(d$poverty)), interval = "confidence")
+
+paso.1.d = data.frame(
+  rbind(paso.1.pob.min,paso.1.pob.max),
+  Paso = rep("1", 100),
+  Pobreza = c(rep("Baja", 50), rep("Alta", 50)),
+  Pobreza.n = c(seq(min(d$poverty[d$poverty<mean(d$poverty)]), max(d$poverty), length.out = 50), seq(min(d$poverty[d$poverty>mean(d$poverty)]), max(d$poverty), length.out = 50))
+  )
+
+
+p_load(ggplot2)
+ggplot(paso.1.d, aes(Pobreza.n)) + 
+  geom_line(aes(y=fit,colour = Pobreza)) + 
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.2)
+
+
+ggplot(data=paso.1.d, aes(y=fit, x=Pobreza.n, group=Pobreza, colour=Pobreza,
+                    fill=Pobreza)) +
+  geom_point() +
+  geom_line() +
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=.3, linetype=0) +
+  theme_minimal() +
+  facet_wrap(~ Pobreza)
 
 
 # Hazard Models
