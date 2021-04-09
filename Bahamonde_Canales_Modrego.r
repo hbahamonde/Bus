@@ -224,59 +224,13 @@ ols.predict.d = data.frame(
 
 
 ggplot(ols.predict.d, aes( x=Fase, y = fit, ymin = lwr, ymax = upr)) +
-  geom_linerange(aes(color = Pobreza), size = 1, alpha = 0.5) +
-  geom_point(aes(color = Pobreza, shape = Pobreza)) +
+  geom_linerange(aes(color = Pobreza), alpha = 0.5,size = 2) +
+  geom_point(aes(color = Pobreza, shape = Pobreza), size = 5) +
   theme_bw()
 
 
 
-ggplot(ols.predict.d, aes(x=Fase, y=fit, fill=Pobreza)) + 
-  geom_boxplot()
 
-
-data.frame(
-  rbind(p1,p2,p3),
-  Paso = c(rep("1", lenght),rep("2", lenght),rep("3", lenght)),
-  Pobreza = c(rep("Baja", 50), rep("Alta", 50)),
-  Pobreza.n = c(seq(min(d$poverty[d$poverty<mean(d$poverty)]), max(d$poverty), length.out = 50), seq(min(d$poverty[d$poverty>mean(d$poverty)]), max(d$poverty), length.out = 50))
-)
-
-
-
-
-
-# Plot 2
-paso.1.pob.min = data.frame(predict(ols, data.frame(Paso = 1, poverty = seq(min(d$poverty[d$poverty<mean(d$poverty)]), max(d$poverty), length.out = 50)), interval = "confidence"))
-
-paso.1.pob.max = data.frame(predict(ols, data.frame(Paso = 1, poverty =seq(min(d$poverty[d$poverty>mean(d$poverty)]), max(d$poverty), length.out = 50)), interval = "confidence"))
-
-#paso.2.pob.min = predict(ols, data.frame(Paso = 2, poverty = min(d$poverty)), interval = "confidence")
-#paso.2.pob.max = predict(ols, data.frame(Paso = 2, poverty = max(d$poverty)), interval = "confidence")
-
-#paso.3.pob.min = predict(ols, data.frame(Paso = 3, poverty = min(d$poverty)), interval = "confidence")
-#paso.3.pob.max = predict(ols, data.frame(Paso = 3, poverty = max(d$poverty)), interval = "confidence")
-
-paso.1.d = data.frame(
-  rbind(paso.1.pob.min,paso.1.pob.max),
-  Paso = rep("1", 100),
-  Pobreza = c(rep("Baja", 50), rep("Alta", 50)),
-  Pobreza.n = c(seq(min(d$poverty[d$poverty<mean(d$poverty)]), max(d$poverty), length.out = 50), seq(min(d$poverty[d$poverty>mean(d$poverty)]), max(d$poverty), length.out = 50))
-  )
-
-
-p_load(ggplot2)
-ggplot(paso.1.d, aes(Pobreza.n)) + 
-  geom_line(aes(y=fit,colour = Pobreza)) + 
-  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.2)
-
-
-ggplot(data=paso.1.d, aes(y=fit, x=Pobreza.n, group=Pobreza, colour=Pobreza,
-                    fill=Pobreza)) +
-  geom_point() +
-  geom_line() +
-  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=.3, linetype=0) +
-  theme_minimal() +
-  facet_wrap(~ Pobreza)
 
 
 # Hazard Models
