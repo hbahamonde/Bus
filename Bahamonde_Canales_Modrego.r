@@ -196,12 +196,6 @@ coefplot::coefplot(ols,strict=TRUE,coefficients=c("poverty", "Paso"),newNames=c(
 
 
 # Plot 1
-Girth <- seq(9,21, by=0.5) ## make a girth vector
-Height <- seq(60,90, by=0.5) ## make a height vector
-pred_grid <- expand.grid(Girth = Girth, Height = Height)
-pred_grid$Volume2 <-predict(fit_2, new = pred_grid)
-
-
 ols.predict.d = data.frame(
   
   rbind(
@@ -222,7 +216,7 @@ ols.predict.d = data.frame(
 )
 
 
-
+p_load(ggplot2)
 ggplot(ols.predict.d, aes( x=Fase, y = fit, ymin = lwr, ymax = upr)) +
   geom_linerange(aes(color = Pobreza), alpha = 0.5,size = 2) +
   geom_point(aes(color = Pobreza, shape = Pobreza), size = 5) +
