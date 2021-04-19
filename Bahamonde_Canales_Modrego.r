@@ -160,67 +160,60 @@ casen$poverty = as.numeric(as.character(casen$poverty))
 d = merge(d, casen, by=c("Codigo.comuna"), all=F)
 
 
+
+# Agregar: desarrollo municipal & Partido alcalde
+## generar bases vacias para RA
+p_load("writexl")
+
+party.mun.dev.d = data.frame(
+  Codigo.comuna = unique(d$Codigo.comuna),
+  Comuna = unique(d$Comuna),
+  mun.dev = NA,
+  party = NA
+  )
+
+write_xlsx(party.mun.dev.d,"party_mun_dev_d.xlsx")
+
+
+
+
+
 ############
-# Models
+# Models: DV is "fase"
 ############
+
+# OLS
+# Ordinal Probit/Logit
+# Survival
+
+
 
 
 # OLS (fixed effects)
 options(scipen=9999999)
-ols = lm(COVID.p ~ Paso + poverty, data=d)
+ols = lm(Paso ~ log(COVID)  + poverty, data=d)
 
 
 # Panel Regression
 ## https://www.princeton.edu/~otorres/Panel101R.pdf
 p_load(plm)
 d$date.2 = 1:nrow(d)
-p.fe = plm(COVID.p ~ Paso + poverty, data = d, index = c("Comuna","date.2"), model="within")
-p.re = plm(COVID.p ~ Paso + poverty, data = d, index = c("Comuna","date.2"), model="random")
+p.fe = plm(Paso ~ log(COVID) + poverty, data = d, index = c("Comuna","date.2"), model="within")
+p.re = plm(Paso ~ log(COVID) + poverty, data = d, index = c("Comuna","date.2"), model="random")
 
 # Ordered Probit
-#p_load(MASS)
-# o.probit = polr(COVID ~ as.factor(Paso) + poverty, data = d, Hess=TRUE)
+p_load(MASS)
+o.probit = polr(as.factor(Paso) ~ log(COVID) + poverty, data = d, Hess=TRUE)
 
 
 # Table
 p_load(texreg)
-screenreg(list(ols,p.fe,p.re), omit.coef = "factor",custom.note="Since poverty is fixed by municipality it acts as a fixed effect. Due to multicoliniearity, the FE model drops the poverty variable.")
+screenreg(list(ols,p.fe,p.re, o.probit), omit.coef = "factor",custom.note="Since poverty is fixed by municipality it acts as a fixed effect. Due to multicoliniearity, the FE model drops the poverty variable.")
 
 # Coefplot
 coefplot::coefplot(ols,strict=TRUE,coefficients=c("poverty", "Paso"),newNames=c(poverty="Porcentaje de Pobreza\n(Casen 2019)", Paso="Paso a Paso\n(Fase)"))
 
-# Prediction (OLS)
-## https://www.dataquest.io/blog/statistical-learning-for-predictive-modeling-r/
 
-
-
-
-# Plot 1
-ols.predict.d = data.frame(
-  
-  rbind(
-    predict(ols, data.frame(Paso = 1, poverty = min(d$poverty)), interval = "confidence"),
-    predict(ols, data.frame(Paso = 1, poverty = max(d$poverty)), interval = "confidence"),
-    
-    predict(ols, data.frame(Paso = 2, poverty = min(d$poverty)), interval = "confidence"),
-    predict(ols, data.frame(Paso = 2, poverty = max(d$poverty)), interval = "confidence"),
-    
-    predict(ols, data.frame(Paso = 3, poverty = min(d$poverty)), interval = "confidence"),
-    predict(ols, data.frame(Paso = 3, poverty = max(d$poverty)), interval = "confidence"),
-    
-    predict(ols, data.frame(Paso = 4, poverty = min(d$poverty)), interval = "confidence"),
-    predict(ols, data.frame(Paso = 4, poverty = max(d$poverty)), interval = "confidence")),
-  Fase = c(rep("1",2),rep("2",2),rep("3",2),rep("4",2)),
-  Pobreza = c(rep(c("Baja","Alta"),4))
-  
-)
-
-
-p_load(ggplot2)
-ggplot(ols.predict.d, aes( x=Fase, y = fit, ymin = lwr, ymax = upr)) +
-  geom_linerange(aes(color = Pobreza), alpha = 0.5,size = 2) +
-  geom_point(aes(color = Pobreza, shape = Pobreza), size = 5) +
-  theme_bw()
 
 
 
@@ -235,3 +228,25 @@ cox = coxph(Surv(L.cox$year, L.cox$year2, L.cox$incometax.s, origin=1901) ~
                 log(constagricult.L) + 
                 log(totpop) +
                 cluster(country), data=L.cox)
+
+
+
+
+############
+# Abstract
+############
+
+
+## ---- abstract ----
+fileConn <- file ("abstract.txt")
+abstract.c = as.character(c("This paper explores a digitalized population dataset on daily public transportation and COVID contagion in Santiago de Chile, the capital city of one of the most unequal countries in the world. Using publicly available information on daily contagions of all municipalities in Santiago de Chile and a novel cellphone dataset to capture individual mobility, we exploit hazard models and spatial analyses to show that low-income municipalities systematically bore the cost of the COVID pandemic. Substantively, these findings go in line with the recent ``politics of weakness'' literature. This area of study focuses on highly strategic political decisions that lead political entities (in our case, the state) to systematically overlook certain situations (such as COVID contagions) according to some municipal characteristics (in our case, average municipal incomes). We believe that working-class municipalities have systematically higher COVID contagions rates keeping everything else constant due to loosen policies aimed to restrict mobility---i.e., looser policies relative to white-collar municipalities."))
+writeLines(abstract.c, fileConn)
+close(fileConn)
+## ----
+
+
+
+
+## ---- abstract.length ----
+abstract.c.l = sapply(strsplit(abstract.c, " "), length)
+## ----
