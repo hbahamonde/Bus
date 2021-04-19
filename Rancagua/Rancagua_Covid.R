@@ -215,7 +215,7 @@ ols.predict.d = data.frame(
 )
 
 
-
+p_load(ggplot2)
 ggplot(ols.predict.d, aes( x=Fase, y = fit, ymin = lwr, ymax = upr)) +
   geom_linerange(aes(color = Pobreza), alpha = 0.5,size = 2) +
   geom_point(aes(color = Pobreza, shape = Pobreza), size = 5) +
