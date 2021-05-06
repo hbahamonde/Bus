@@ -276,3 +276,7 @@ TSWLatexianTemp*
 *.lpz
 
 Bahamonde_Canales_Modrego.tex
+
+.DS_Store
+
+*.history
