@@ -116,6 +116,7 @@ bip = rio::import(file = 'https://github.com/hbahamonde/Bus/raw/main/bus_data.tx
 colnames(bip)[colnames(bip)=="Codigo comuna"] <- "mun.cod"
 colnames(bip)[colnames(bip)=="Fecha"] <- "Date"
 bip$Date = as.Date(bip$Date)
+p_load(dplyr)
 bip = bip %>% select(-c(Comuna))
 
 
