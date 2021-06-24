@@ -135,14 +135,85 @@ bus$Poverty = ifelse(bus$Economia>=median(bus$Economia)+sd(bus$Economia), "Wealt
 # time series plot
 p_load(ggplot2)
 ggplot(bus) +
-  geom_bar(aes(y=Transacciones,x=Date,fill = Paso),stat="identity", width = 0.9) + facet_wrap(Poverty~Comuna)
+  geom_bar(aes(y=Transacciones,x=Date,fill = Paso),stat="identity", width = 0.9) + 
+  #facet_wrap(~Comuna)
+  facet_wrap(Poverty~Comuna)
   #facet_grid(scales = "free_y", rows = vars(Comuna), cols = vars(Poverty))
 
 
 # ideas
-##  pool regression interaction paso*poor (continuous and binary).
+## pool regression interaction paso*poor (continuous and binary).
+p_load(dplyr)
+bus2 = bus %>% filter(Comuna == "Vitacura" | Comuna == "La Cisterna" | Comuna == "Estacion Central" | Comuna == "Nunoa")
+
+levels(bus2$Paso)<-factor(c("Some restrictions", "Lockdown"))
+
+# time series plot
+p_load(ggplot2)
+ggplot(bus2) +
+  geom_bar(aes(y=Transacciones,x=Date,fill = Paso),stat="identity", width = 0.9) + 
+  #facet_wrap(~Comuna)
+  facet_wrap(Poverty~Comuna) +
+  ggtitle("Bus Card Transactions (2020)") +
+  xlab("Date") + ylab("Transactions\n(count)") +
+  theme_bw() +
+  theme(legend.position="bottom")
+
+################################################################
+
+# Load Covid Data
+p_load(rio, tidyverse)
+covid.d = rio::import(file = 'https://github.com/hbahamonde/Datos-COVID19/raw/master/output/producto1/Covid-19_std.csv',which = 1)
 
 
+covid.d <- covid.d[ which(covid.d$Region == "Metropolitana"), ]
 
 
+# keep columns
+p_load(dplyr)
+covid.d = covid.d %>% dplyr::select("Casos confirmados", Comuna, Fecha,"Casos confirmados", "Codigo comuna")
 
+# Change column names
+colnames(covid.d)[colnames(covid.d)=="Fecha"] <- "Date"
+colnames(covid.d)[colnames(covid.d)=="Casos confirmados"] <- "Covid"
+colnames(covid.d)[colnames(covid.d)=="Codigo comuna"] <- "mun.cod"
+
+# format vars
+covid.d$Date = as.Date(covid.d$Date)
+
+# drop NA's in comuna
+covid.d <- na.omit(covid.d)
+
+covid.d = covid.d %>% dplyr::select(-c("Comuna"))
+
+
+p_load(rio, tidyverse)
+idc.d = rio::import(file = 'https://github.com/hbahamonde/Tobalaba/raw/main/IDC_data.csv',which = 1)
+idc.d$party = as.factor(idc.d$party)
+idc.d$Comuna = as.factor(idc.d$Comuna)
+
+covid = merge(covid.d,idc.d, by="mun.cod")
+
+library(dplyr)
+covid2 = covid %>% 
+  group_by(mun.cod) %>% 
+  summarise(Covid = sum(Covid))
+
+data.final = merge(covid2, idc.d, by="mun.cod")
+
+
+data.final$Economia1 = (data.final$Economia - mean(data.final$Economia)) / sd(data.final$Economia)
+data.final$Covid1 = (data.final$Covid - mean(data.final$Covid)) / sd(data.final$Covid)
+
+
+lo = loess(data.final$Covid1 ~ data.final$Economia1)
+plot(data.final$Economia1,data.final$Covid1)
+lines(predict(lo), col='red')
+
+data.final$Category = ifelse(data.final$Comuna=="Las Condes" | data.final$Comuna=="Vitacura" | data.final$Comuna=="Providencia", "High", "Low"  )
+
+#qplot(data.final$Economia[data.final$Category=="High"],data.final$Covid[data.final$Category=="High"], geom='smooth', span =0.5, method = 'loess', formula= 'y ~ x')
+
+qplot(data.final$Economia[data.final$Category=="Low"],log(data.final$Covid[data.final$Category=="Low"]), geom='smooth', span =0.5, method = 'loess', formula= 'y ~ x')
+
+qplot(data.final$Economia,log(data.final$Covid), geom='smooth', span =0.5, method = 'loess', formula= 'y ~ x')
